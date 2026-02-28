@@ -1,0 +1,32 @@
+# Git ignore file for the entire MyPortfolio project
+
+# Node.js
+**/node_modules/
+
+# Flutter/Dart
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/generated/
+**/.idea/
+**/.vscode/
+
+# Environment Variables (CRITICAL)
+**/.env
+**/.env.local
+**/.env.example
+!**/backend/.env.example
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Logs
+**/logs/
+**/*.log
+
+# Project specific
+**/uploads/
+!**/uploads/.gitkeep

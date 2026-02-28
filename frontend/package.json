@@ -1,0 +1,12 @@
+{
+  "name": "frontend-placeholder",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Placeholder package.json to avoid npm ENOENT in a Flutter frontend. Use Flutter commands to run the app.",
+  "scripts": {
+    "start": "node -e \"console.log('This is a Flutter project. Run flutter run instead.')\""
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}
