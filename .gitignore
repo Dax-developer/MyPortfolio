@@ -30,3 +30,6 @@ Thumbs.db
 # Project specific
 **/uploads/
 !**/uploads/.gitkeep
+
+# Allow backend/public for deployment
+!backend/public/

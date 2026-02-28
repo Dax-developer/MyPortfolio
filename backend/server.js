@@ -42,6 +42,18 @@ app.use('/api/languages', languageRoutes);
 app.use('/api/portfolio', analyticsRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Serve Frontend Static Files
+const frontendPath = path.join(__dirname, 'public');
+app.use(express.static(frontendPath));
+
+// Handle SPA Routing - Redirect all non-API requests to index.html
+app.get('*', (req, res, next) => {
+  if (req.url.startsWith('/api') || req.url.startsWith('/uploads')) {
+    return next();
+  }
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
 const PORT = process.env.PORT || 5000;
 
 const start = async () => {
