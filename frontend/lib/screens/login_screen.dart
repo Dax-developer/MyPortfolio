@@ -89,12 +89,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Login to access your portfolio dashboard',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
                       const SizedBox(height: 32),
                       _buildTextField(
                         controller: _emailController,

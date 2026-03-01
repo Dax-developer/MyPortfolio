@@ -120,12 +120,6 @@ class _SignupScreenState extends State<SignupScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Join us and start building your professional portfolio',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
                       const SizedBox(height: 32),
                       _buildTextField(
                         controller: _emailController,
