@@ -2,16 +2,13 @@ services:
   - type: web
     name: myportfolio-backend
     env: node
-    buildCommand: npm run build
-    startCommand: npm run start
+    rootDir: backend
+    buildCommand: npm install && node deploy_prepare.js
+    startCommand: node server.js
     envVars:
       - key: MONGO_URI
         value: mongodb+srv://daxpatel2300005_db_user:vi21FPWuweDVZDuz@cluster0.zdtxlyg.mongodb.net/?appName=Cluster0
       - key: NODE_VERSION
-        value: 18.16.0
+        value: 18.x
       - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
         value: true
-      - key: CHROME_PATH
-        value: /usr/bin/google-chrome-stable
-    # Note: Render's free tier might need manual approval for Puppeteer,
-    # but this config sets the stage for a working deployment.
