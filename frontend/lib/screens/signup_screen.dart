@@ -80,10 +80,14 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = Responsive.isMobile(context);
-
     return Scaffold(
       backgroundColor: AppTheme.primaryColor,
+      appBar: AppBar(
+        title: const Text('Sign Up', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
@@ -102,20 +106,31 @@ class _SignupScreenState extends State<SignupScreen> {
                       Image.asset(
                         'assets/images/logo.jpg',
                         height: 80,
-                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.person_add, size: 80, color: AppTheme.primaryColor),
+                        errorBuilder: (context, error, stackTrace) => const Icon(
+                          Icons.person_add,
+                          size: 80,
+                          color: AppTheme.primaryColor,
+                        ),
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        'SIGN UP',
-                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          color: AppTheme.primaryColor,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        'Create Account',
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              color: AppTheme.darkTextColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Join us and start building your professional portfolio',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 32),
                       _buildTextField(
                         controller: _emailController,
                         label: 'Email',
+                        prefixIcon: Icons.email_outlined,
                         readOnly: _isOtpSent,
                         validator: (v) => v != null && v.contains('@') ? null : 'Valid email required',
                       ),
@@ -124,6 +139,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         controller: _passwordController,
                         label: 'Password',
                         isPassword: true,
+                        prefixIcon: Icons.lock_outline,
                         readOnly: _isOtpSent,
                         obscureText: _obscurePassword,
                         onTogglePassword: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -134,6 +150,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         _buildTextField(
                           controller: _otpController,
                           label: 'OTP (Sent to Email)',
+                          prefixIcon: Icons.security,
                           keyboardType: TextInputType.number,
                           validator: (v) => v != null && v.length == 6 ? null : 'Enter 6-digit OTP',
                         ),
@@ -146,11 +163,15 @@ class _SignupScreenState extends State<SignupScreen> {
                           onPressed: _isLoading ? null : (_isOtpSent ? _handleVerifyOtp : _handleSignup),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryColor,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                           child: _isLoading
-                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                              : Text(_isOtpSent ? 'VERIFY OTP' : 'SIGN UP', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                              : Text(_isOtpSent ? 'VERIFY OTP' : 'SIGN UP',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                         ),
                       ),
                       const SizedBox(height: 32),
@@ -160,7 +181,8 @@ class _SignupScreenState extends State<SignupScreen> {
                           const Text('Already a user? ', style: TextStyle(color: AppTheme.lightTextColor)),
                           TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text('LOGIN', style: TextStyle(color: AppTheme.secondaryColor, fontWeight: FontWeight.bold)),
+                            child: const Text('LOGIN',
+                                style: TextStyle(color: AppTheme.secondaryColor, fontWeight: FontWeight.bold)),
                           ),
                         ],
                       ),
@@ -178,6 +200,7 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
+    required IconData prefixIcon,
     bool isPassword = false,
     bool readOnly = false,
     bool obscureText = false,
@@ -185,29 +208,25 @@ class _SignupScreenState extends State<SignupScreen> {
     TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.darkTextColor)),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          obscureText: obscureText,
-          readOnly: readOnly,
-          validator: validator,
-          keyboardType: keyboardType,
-          decoration: InputDecoration(
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            suffixIcon: isPassword
-                ? IconButton(
-                    icon: Icon(obscureText ? Icons.visibility_off : Icons.visibility, color: Colors.black26),
-                    onPressed: onTogglePassword,
-                  )
-                : null,
-          ),
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      readOnly: readOnly,
+      validator: validator,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(prefixIcon),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
-      ],
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(obscureText ? Icons.visibility_off : Icons.visibility, color: Colors.black26),
+                onPressed: onTogglePassword,
+              )
+            : null,
+      ),
     );
   }
 
