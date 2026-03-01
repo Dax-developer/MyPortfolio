@@ -44,14 +44,22 @@ exports.signup = async (req, res) => {
         };
 
         if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-            await transporter.sendMail(mailOptions);
+            try {
+                await transporter.sendMail(mailOptions);
+                console.log(`✔ [AUTH] OTP sent successfully to ${email}`);
+            } catch (mailErr) {
+                console.error(`✘ [AUTH] Failed to send email to ${email}:`, mailErr.message);
+                // In development/testing, we might want to still return success but log the OTP
+                console.log(`[AUTH] FALLBACK: OTP for ${email} is ${otp}`);
+            }
         } else {
-            console.log('--- EMAIL CONFIG MISSING ---');
-            console.log(`OTP for ${email}: ${otp}`);
+            console.warn('⚠ [AUTH] EMAIL CONFIG MISSING (EMAIL_USER/EMAIL_PASS not set)');
+            console.log(`[AUTH] DEBUG: OTP for ${email} is ${otp}`);
         }
 
-        res.json({ message: 'OTP sent to email' });
+        res.json({ message: 'OTP sent to email (Check logs if not received)' });
     } catch (err) {
+        console.error(`✘ [AUTH] Signup Error:`, err.message);
         res.status(500).json({ error: err.message });
     }
 };
