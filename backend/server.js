@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const path = require('path');
 const { connectOnce } = require('./config/db');
 
 const projectRoutes = require('./routes/projectRoutes');
