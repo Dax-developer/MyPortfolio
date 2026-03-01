@@ -3,8 +3,7 @@
     "version": "1.0.0",
     "scripts": {
         "install-backend": "cd backend && npm install",
-        "build-frontend": "cd frontend && flutter build web",
-        "build": "npm run install-backend && npm run build-frontend",
+        "build": "npm run install-backend && node backend/deploy_prepare.js",
         "start": "cd backend && npm start"
     },
     "engines": {
