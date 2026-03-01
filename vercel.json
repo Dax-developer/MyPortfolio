@@ -16,11 +16,7 @@
         },
         {
             "source": "/((?!api|uploads|assets|canvaskit|icons|.*\\.).*)",
-            "destination": "/public/index.html"
-        },
-        {
-            "source": "/(.*)",
-            "destination": "/public/$1"
+            "destination": "/index.html"
         }
     ]
 }
