@@ -28,4 +28,7 @@ pids
 .DS_Store
 Thumbs.db
 
+# Uploads
+uploads/
+
 !public/

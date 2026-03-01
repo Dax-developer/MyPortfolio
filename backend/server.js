@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const multer = require('multer');
 const { connectOnce } = require('./config/db');
 
 const projectRoutes = require('./routes/projectRoutes');
@@ -21,6 +22,13 @@ const auth = require('./middleware/authMiddleware');
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Ensure uploads directory exists
+const fs = require('fs');
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
 
 // Static File Serving
 const frontendPath = path.resolve(__dirname, 'public');
@@ -55,11 +63,25 @@ app.use('/api/experience', experienceRoutes);
 app.use('/api/education', educationRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/resume', resumeRoutes);
-app.use('/api/contact', contactRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/languages', languageRoutes);
 app.use('/api/portfolio', analyticsRoutes);
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error(`[ERROR] ${new Date().toISOString()} - ${req.method} ${req.url}: ${err.message}`);
+  console.error(err.stack);
+
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({ error: `Upload error: ${err.message}` });
+  }
+
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error',
+    path: req.url
+  });
+});
 
 // Handle SPA Routing - Redirect all non-API requests to index.html
 app.get('*', (req, res, next) => {
@@ -70,8 +92,17 @@ app.get('*', (req, res, next) => {
   res.sendFile(indexPath, (err) => {
     if (err) {
       console.error(`[ERROR] Failed to send index.html: ${err.message}`);
-      res.status(404).send('Site content not found. If this is a new deployment, wait a minute and refresh.');
+      // If index.html is missing, return a clean error
+      res.status(404).json({ error: 'Site content not found. API is healthy at /api.' });
     }
+  });
+});
+
+// Final 404 for API
+app.use((req, res) => {
+  res.status(404).json({
+    error: `Route ${req.method} ${req.url} Not Found`,
+    message: 'Check your API endpoint and HTTP method'
   });
 });
 

@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 import '../models/profile.dart'; 
 import 'package:flutter/services.dart';
 import '../models/language.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AddDialogs {
   static void handleCentralAdd(BuildContext context, GlobalKey<NavigatorState> navigatorKey, VoidCallback onRefresh) async {
@@ -244,6 +245,14 @@ class AddDialogs {
                   showChangePhotoDialog(navigatorKey.currentContext!, onRefresh);
                 },
               ),
+              ListTile(
+                leading: const Icon(Icons.star, color: Colors.amber),
+                title: const Text('Edit Hero Section (Name/Title)', style: TextStyle(color: Colors.amber)),
+                onTap: () {
+                  Navigator.pop(context);
+                  showEditHeroDialog(navigatorKey.currentContext!, onRefresh);
+                },
+              ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.announcement, color: Colors.purple),
@@ -381,6 +390,14 @@ class AddDialogs {
               onTap: () {
                 Navigator.pop(context);
                 showChangePhotoDialog(navigatorKey.currentContext!, onRefresh);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.star, color: Colors.orange),
+              title: const Text('Edit Hero Section', style: TextStyle(color: Colors.orange)),
+              onTap: () {
+                Navigator.pop(context);
+                showEditHeroDialog(navigatorKey.currentContext!, onRefresh);
               },
             ),
           ],
@@ -1090,7 +1107,7 @@ class AddDialogs {
                   setDialogState(() => isLoading = true);
                   try {
                     final bytes = await file.readAsBytes();
-                    await ApiService.uploadProfilePhoto(bytes, file.name);
+                    await ApiService.uploadProfilePhoto(bytes, file.name, filePath: kIsWeb ? null : file.path);
                     if (context.mounted) {
                       Navigator.pop(context);
                       onRefresh();
@@ -1251,13 +1268,25 @@ class AddDialogs {
   }
 
   static void showEditHeroDialog(BuildContext context, VoidCallback onRefresh) async {
-    final profile = await ApiService.getProfile();
+    try {
+      final profile = await ApiService.getProfile();
+      if (context.mounted) {
+        _showEditHeroDialog(context, profile, onRefresh);
+      }
+    } catch (e) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading profile: $e')));
+    }
+  }
+
+  static void _showEditHeroDialog(BuildContext context, Profile profile, VoidCallback onRefresh) {
     final nameController = TextEditingController(text: profile.name);
     final titleController = TextEditingController(text: profile.title);
-    final heroSkillsController = TextEditingController(text: profile.heroSkills);
+    final skillsController = TextEditingController(text: profile.heroSkills);
+    final instaController = TextEditingController(text: profile.footerInstagram);
+    final githubController = TextEditingController(text: profile.footerGitHub);
+    final linkedinController = TextEditingController(text: profile.footerLinkedIn);
+    final whatsappController = TextEditingController(text: profile.footerWhatsApp);
     bool isLoading = false;
-
-    if (!context.mounted) return;
 
     showDialog(
       context: context,
@@ -1268,20 +1297,15 @@ class AddDialogs {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
-                ),
-                TextField(
-                  controller: titleController,
-                  decoration: const InputDecoration(labelText: 'Title'),
-                ),
-                TextField(
-                  controller: heroSkillsController,
-                  decoration: const InputDecoration(
-                    labelText: 'Hero Skills (e.g. Flutter • Node.js • MongoDB)',
-                  ),
-                ),
+                TextField(controller: nameController, decoration: const InputDecoration(labelText: 'Name')),
+                TextField(controller: titleController, decoration: const InputDecoration(labelText: 'Title')),
+                TextField(controller: skillsController, decoration: const InputDecoration(labelText: 'Hero Skills (e.g. Flutter • Node.js)')),
+                const Divider(),
+                const Text('Social Links', style: TextStyle(fontWeight: FontWeight.bold)),
+                TextField(controller: instaController, decoration: const InputDecoration(labelText: 'Instagram URL')),
+                TextField(controller: githubController, decoration: const InputDecoration(labelText: 'GitHub URL')),
+                TextField(controller: linkedinController, decoration: const InputDecoration(labelText: 'LinkedIn URL')),
+                TextField(controller: whatsappController, decoration: const InputDecoration(labelText: 'WhatsApp URL')),
               ],
             ),
           ),
@@ -1294,19 +1318,23 @@ class AddDialogs {
                   await ApiService.updateProfile({
                     'name': nameController.text.trim(),
                     'title': titleController.text.trim(),
-                    'heroSkills': heroSkillsController.text.trim(),
+                    'heroSkills': skillsController.text.trim(),
+                    'footerInstagram': instaController.text.trim(),
+                    'footerGitHub': githubController.text.trim(),
+                    'footerLinkedIn': linkedinController.text.trim(),
+                    'footerWhatsApp': whatsappController.text.trim(),
                   });
                   if (context.mounted) {
                     Navigator.pop(context);
                     onRefresh();
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hero Section updated!')));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hero section updated!')));
                   }
                 } catch (e) {
                   setDialogState(() => isLoading = false);
                   if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
                 }
               },
-              child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Save'),
+              child: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator()) : const Text('Save'),
             ),
           ],
         ),
@@ -1469,7 +1497,8 @@ class AddDialogs {
                       bytes, 
                       name, 
                       descController.text.trim(), 
-                      file.name
+                      file.name,
+                      filePath: kIsWeb ? null : file.path,
                     );
                   }
                   if (context.mounted) {

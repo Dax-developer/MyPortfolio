@@ -17,8 +17,8 @@ class ApiService {
   // Base URL for API
   // PROD: Replace with your actual Vercel project URL
   // Example: 'https://myportfolio-backend.vercel.app/api'
-  static const prodUrl = 'https://YOUR_VERCEL_URL.vercel.app/api';
-  static const localUrl = 'http://127.0.0.1:5000/api'; 
+  static const prodUrl = 'https://myportfolio-etvj.onrender.com/api';
+  static const localUrl = 'http://172.16.99.75:5000/api'; 
 
   static String get baseUrl {
     if (kIsWeb) {
@@ -76,7 +76,8 @@ class ApiService {
         Uri.parse('$baseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'email': email, 'password': password}),
-      );
+      ).timeout(const Duration(seconds: 30));
+      
       final data = json.decode(res.body);
       if (res.statusCode == 200) {
         await saveToken(data['token'], permanent: rememberMe);
@@ -85,7 +86,7 @@ class ApiService {
         return {'success': false, 'message': data['error'] ?? 'Login failed'};
       }
     } catch (e) {
-      return {'success': false, 'message': 'Connection error. Check your internet.'};
+      return {'success': false, 'message': 'Connection error: $e'};
     }
   }
 
@@ -95,7 +96,8 @@ class ApiService {
         Uri.parse('$baseUrl/auth/signup'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'email': email, 'password': password}),
-      );
+      ).timeout(const Duration(seconds: 30));
+      
       final data = json.decode(res.body);
       if (res.statusCode == 200) {
         return {'success': true, 'message': data['message'] ?? 'OTP sent to email'};
@@ -103,7 +105,7 @@ class ApiService {
         return {'success': false, 'message': data['error'] ?? 'Signup failed'};
       }
     } catch (e) {
-      return {'success': false, 'message': 'Connection error. Check your internet.'};
+      return {'success': false, 'message': 'Connection error: $e'};
     }
   }
 
@@ -428,28 +430,50 @@ class ApiService {
     }
   }
 
-  static Future<Profile> uploadProfilePhoto(List<int> fileBytes, String fileName) async {
-    final uri = Uri.parse('$baseUrl/profile/photo');
-    final request = http.MultipartRequest('PATCH', uri);
-    
-    final token = await getToken();
-    if (token != null) {
-      request.headers['Authorization'] = 'Bearer $token';
+  static Future<Profile> uploadProfilePhoto(List<int> fileBytes, String fileName, {String? filePath}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/profile/photo');
+      final request = http.MultipartRequest('PATCH', uri);
+      
+      final token = await getToken();
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      
+      if (filePath != null && !kIsWeb) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'photo',
+          filePath,
+        ));
+      } else {
+        request.files.add(http.MultipartFile.fromBytes(
+          'photo',
+          fileBytes,
+          filename: fileName,
+        ));
+      }
+      
+      final streamedResponse = await request.send().timeout(const Duration(minutes: 2));
+      final res = await http.Response.fromStream(streamedResponse);
+      
+      if (res.statusCode == 200) {
+        return Profile.fromJson(json.decode(res.body));
+      }
+      
+      String errorMsg = 'Upload failed (${res.statusCode})';
+      try {
+        final decoded = json.decode(res.body);
+        errorMsg = decoded['error'] ?? decoded['message'] ?? errorMsg;
+      } catch (_) {
+        // Not a JSON response, maybe HTML error page
+        errorMsg = 'Upload failed (${res.statusCode}). Server returned non-JSON response.';
+        print('Server response body: ${res.body}');
+      }
+      throw Exception(errorMsg);
+    } catch (e) {
+      print('DEBUG: Upload exception: $e');
+      throw Exception('Upload failed: $e');
     }
-    
-    request.files.add(http.MultipartFile.fromBytes(
-      'photo',
-      fileBytes,
-      filename: fileName,
-    ));
-    
-    final streamedResponse = await request.send();
-    final res = await http.Response.fromStream(streamedResponse);
-    
-    if (res.statusCode == 200) {
-      return Profile.fromJson(json.decode(res.body));
-    }
-    throw Exception('Failed to upload photo: ${res.body}');
   }
 
   static Future<Profile> deleteProfilePhoto() async {
@@ -473,33 +497,54 @@ class ApiService {
     throw Exception('Failed to load certificates');
   }
 
-  static Future<Certificate> uploadCertificate(List<int> fileBytes, String name, String? description, String fileName) async {
-    final uri = Uri.parse('$baseUrl/certificates');
-    final request = http.MultipartRequest('POST', uri);
-    
-    final token = await getToken();
-    if (token != null) {
-      request.headers['Authorization'] = 'Bearer $token';
+  static Future<Certificate> uploadCertificate(List<int> fileBytes, String name, String? description, String fileName, {String? filePath}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/certificates');
+      final request = http.MultipartRequest('POST', uri);
+      
+      final token = await getToken();
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      
+      request.fields['name'] = name;
+      if (description != null) {
+        request.fields['description'] = description;
+      }
+      
+      if (filePath != null && !kIsWeb) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'certificate',
+          filePath,
+        ));
+      } else {
+        request.files.add(http.MultipartFile.fromBytes(
+          'certificate',
+          fileBytes,
+          filename: fileName,
+        ));
+      }
+      
+      final streamedResponse = await request.send().timeout(const Duration(minutes: 2));
+      final res = await http.Response.fromStream(streamedResponse);
+      
+      if (res.statusCode == 201) {
+        return Certificate.fromJson(json.decode(res.body));
+      }
+      
+      String errorMsg = 'Certificate upload failed (${res.statusCode})';
+      try {
+        final decoded = json.decode(res.body);
+        errorMsg = decoded['error'] ?? decoded['message'] ?? errorMsg;
+      } catch (_) {
+        errorMsg = 'Certificate upload failed (${res.statusCode}). Server returned non-JSON response.';
+        print('Server response body: ${res.body}');
+      }
+      throw Exception(errorMsg);
+    } catch (e) {
+      print('DEBUG: Certificate upload exception: $e');
+      throw Exception('Certificate upload failed: $e');
     }
-    
-    request.fields['name'] = name;
-    if (description != null) {
-      request.fields['description'] = description;
-    }
-    
-    request.files.add(http.MultipartFile.fromBytes(
-      'certificate',
-      fileBytes,
-      filename: fileName,
-    ));
-    
-    final streamedResponse = await request.send();
-    final res = await http.Response.fromStream(streamedResponse);
-    
-    if (res.statusCode == 201) {
-      return Certificate.fromJson(json.decode(res.body));
-    }
-    throw Exception('Failed to upload certificate: ${res.body}');
   }
 
   static Future<void> deleteCertificate(String id) async {

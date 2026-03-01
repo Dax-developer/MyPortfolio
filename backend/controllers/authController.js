@@ -1,19 +1,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
-const nodemailer = require('nodemailer');
-
-// Email Transporter (using environment variables)
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-    connectionTimeout: 15000, // 15 seconds
-    greetingTimeout: 15000,
-    socketTimeout: 20000
-});
+const { sendEmail } = require('../utils/mailer');
 
 exports.signup = async (req, res) => {
     try {
@@ -53,11 +41,13 @@ exports.signup = async (req, res) => {
             text: `Your OTP for portfolio signup is: ${otp}. It expires in 10 minutes.`
         };
 
-        if (process.env.EMAIL_USER && process.env.EMAIL_USER !== "ADD_YOUR_EMAIL_HERE" && process.env.EMAIL_PASS) {
+        if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
             try {
-                // Try sending email
-                await transporter.sendMail(mailOptions);
-                // ONLY SAVE if email was sent (or at least attempted without timeout)
+                await sendEmail({
+                    to: email,
+                    subject: 'Portfolio Signup OTP',
+                    text: `Your OTP for portfolio signup is: ${otp}. It expires in 10 minutes.`
+                });
                 await user.save();
                 console.log(`✔ [AUTH] OTP sent successfully to ${email}`);
                 return res.json({ message: 'OTP sent to email' });
@@ -141,16 +131,12 @@ exports.forgotPassword = async (req, res) => {
         user.otpExpires = otpExpires;
         await user.save();
 
-        // Send OTP via email
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: 'Portfolio Password Reset OTP',
-            text: `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`
-        };
-
         if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-            await transporter.sendMail(mailOptions);
+            await sendEmail({
+                to: email,
+                subject: 'Portfolio Password Reset OTP',
+                text: `Your OTP for password reset is: ${otp}. It expires in 10 minutes.`
+            });
         } else {
             console.log('--- EMAIL CONFIG MISSING ---');
             console.log(`Password Reset OTP for ${email}: ${otp}`);
@@ -216,15 +202,12 @@ exports.forgotAdminPasscode = async (req, res) => {
         user.adminResetOtpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
         await user.save();
 
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: adminEmail,
-            subject: 'Portfolio Admin Passcode Reset OTP',
-            text: `Your OTP for admin passcode reset is: ${otp}. It expires in 10 minutes.`
-        };
-
         if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-            await transporter.sendMail(mailOptions);
+            await sendEmail({
+                to: adminEmail,
+                subject: 'Portfolio Admin Passcode Reset OTP',
+                text: `Your OTP for admin passcode reset is: ${otp}. It expires in 10 minutes.`
+            });
         } else {
             console.log('--- ADMIN EMAIL CONFIG MISSING ---');
             console.log(`Admin OTP for ${adminEmail}: ${otp}`);
