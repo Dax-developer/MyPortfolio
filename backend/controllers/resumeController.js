@@ -4,7 +4,7 @@ const Experience = require('../models/Experience');
 const Education = require('../models/Education');
 const Profile = require('../models/Profile');
 const puppeteer = require('puppeteer-core');
-const chromeLauncher = require('chrome-launcher');
+// chrome-launcher is ESM only, will be loaded dynamically in the function
 const path = require('path');
 const fs = require('fs');
 
@@ -26,9 +26,32 @@ exports.downloadResume = async (req, res) => {
     const html = generateResumeHtml(profile, projects, skills, experiences, educations);
 
     // 3. Launch Browser and Generate PDF
-    const chromePath = chromeLauncher.getChromePath();
+    let chromePath;
+    try {
+      const { getChromePath } = await import('chrome-launcher');
+      chromePath = getChromePath();
+    } catch (e) {
+      console.log('chrome-launcher dynamic import failed or not supported, trying fallback...');
+    }
+
+    // Fallback for Render (Linux)
+    if (!chromePath && (process.env.RENDER || process.platform === 'linux')) {
+      const possiblePaths = [
+        '/usr/bin/google-chrome-stable',
+        '/usr/bin/google-chrome',
+        '/usr/bin/chromium',
+        '/usr/bin/chromium-browser'
+      ];
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          chromePath = p;
+          break;
+        }
+      }
+    }
+
     if (!chromePath) {
-      throw new Error('No Chrome installation found');
+      throw new Error('No Chrome installation found. If on Render, please add the Google Chrome Buildpack.');
     }
 
     browser = await puppeteer.launch({
