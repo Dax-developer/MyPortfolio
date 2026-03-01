@@ -1,0 +1,16 @@
+{
+    "rewrites": [
+        {
+            "source": "/api/(.*)",
+            "destination": "/backend/server.js"
+        },
+        {
+            "source": "/uploads/(.*)",
+            "destination": "/backend/uploads/$1"
+        },
+        {
+            "source": "/((?!api|uploads).*)",
+            "destination": "/backend/public/index.html"
+        }
+    ]
+}
