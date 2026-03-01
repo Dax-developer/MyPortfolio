@@ -21,22 +21,29 @@ exports.signup = async (req, res) => {
 
         // Check if user exists
         let user = await User.findOne({ email });
-        if (user) {
-            return res.status(400).json({ error: 'User already exists' });
+
+        if (user && user.isVerified) {
+            return res.status(400).json({ error: 'User already exists and is verified. Please login.' });
         }
 
         // Generate OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
 
-        user = new User({
-            email,
-            password,
-            otp,
-            otpExpires
-        });
-
-        await user.save();
+        if (user) {
+            // Update existing unverified user
+            user.password = password;
+            user.otp = otp;
+            user.otpExpires = otpExpires;
+        } else {
+            // Create new user
+            user = new User({
+                email,
+                password,
+                otp,
+                otpExpires
+            });
+        }
 
         // Send OTP via email
         const mailOptions = {
@@ -48,12 +55,15 @@ exports.signup = async (req, res) => {
 
         if (process.env.EMAIL_USER && process.env.EMAIL_USER !== "ADD_YOUR_EMAIL_HERE" && process.env.EMAIL_PASS) {
             try {
+                // Try sending email
                 await transporter.sendMail(mailOptions);
+                // ONLY SAVE if email was sent (or at least attempted without timeout)
+                await user.save();
                 console.log(`✔ [AUTH] OTP sent successfully to ${email}`);
                 return res.json({ message: 'OTP sent to email' });
             } catch (mailErr) {
                 console.error(`✘ [AUTH] Failed to send email to ${email}:`, mailErr.message);
-                return res.status(500).json({ error: 'Failed to send OTP email. Please check server logs.' });
+                return res.status(500).json({ error: `Failed to send email: ${mailErr.message}. Check Gmail settings.` });
             }
         } else {
             console.warn('⚠ [AUTH] EMAIL CONFIG MISSING (Check Render Env Variables)');
