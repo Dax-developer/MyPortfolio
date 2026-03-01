@@ -22,13 +22,23 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Log Startup Info
-const frontendPath = path.join(__dirname, 'public');
-console.log(`[STARTUP] Root: ${process.cwd()}`);
-console.log(`[STARTUP] __dirname: ${__dirname}`);
-console.log(`[STARTUP] Expecting public at: ${frontendPath}`);
+// Multi-path Static File Resolution
+const getStaticPath = () => {
+  const paths = [
+    path.join(__dirname, 'public'),
+    path.join(process.cwd(), 'public'),
+    path.join(process.cwd(), 'backend/public')
+  ];
+  for (const p of paths) {
+    if (require('fs').existsSync(p)) return p;
+  }
+  return paths[0]; // Fallback to original
+};
 
-// Serve static files FIRST
+const frontendPath = getStaticPath();
+console.log(`[STARTUP] Working Dir: ${process.cwd()}`);
+console.log(`[STARTUP] Resolved Public Path: ${frontendPath}`);
+
 app.use(express.static(frontendPath));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -38,8 +48,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check
-app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
+// Health check (at root and /api)
+app.get('/health', (req, res) => res.json({ status: 'ok', source: 'root' }));
+app.get('/api/health', (req, res) => res.json({ status: 'ok', source: 'api' }));
 
 // Database Connection Middleware for Serverless/Production
 const dbMiddleware = async (req, res, next) => {
