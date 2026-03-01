@@ -70,21 +70,22 @@ class ApiService {
     return headers;
   }
 
-  static Future<bool> login(String email, String password, {bool rememberMe = true}) async {
+  static Future<Map<String, dynamic>> login(String email, String password, {bool rememberMe = true}) async {
     try {
       final res = await http.post(
         Uri.parse('$baseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'email': email, 'password': password}),
       );
+      final data = json.decode(res.body);
       if (res.statusCode == 200) {
-        final data = json.decode(res.body);
         await saveToken(data['token'], permanent: rememberMe);
-        return true;
+        return {'success': true, 'message': data['message'] ?? 'Login successful'};
+      } else {
+        return {'success': false, 'message': data['error'] ?? 'Login failed'};
       }
-      return false;
     } catch (e) {
-      return false;
+      return {'success': false, 'message': 'Connection error. Check your internet.'};
     }
   }
 

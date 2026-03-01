@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    final success = await ApiService.login(
+    final result = await ApiService.login(
       _emailController.text.trim(),
       _passwordController.text.trim(),
       rememberMe: true,
@@ -35,12 +35,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (mounted) {
       setState(() => _isLoading = false);
-      if (success) {
+      if (result['success']) {
         widget.onLoginSuccess?.call();
         if (Navigator.canPop(context)) Navigator.pop(context, true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid email or password')),
+          SnackBar(content: Text(result['message'])),
         );
       }
     }
