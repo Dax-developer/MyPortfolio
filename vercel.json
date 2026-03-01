@@ -16,11 +16,11 @@
         },
         {
             "source": "/((?!api|uploads|assets|canvaskit|icons|.*\\.).*)",
-            "destination": "/backend/public/index.html"
+            "destination": "/public/index.html"
         },
         {
             "source": "/(.*)",
-            "destination": "/backend/public/$1"
+            "destination": "/public/$1"
         }
     ]
 }
