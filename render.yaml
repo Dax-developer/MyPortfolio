@@ -1,18 +1,21 @@
 services:
   - type: web
-    rootDir: backend
-    buildCommand: npm install
-    startCommand: node server.js
+    name: myportfolio-backend
+    env: node
+    buildCommand: npm run build
+    startCommand: npm start
     envVars:
       - key: MONGO_URI
         value: mongodb+srv://daxpatel2300005_db_user:vi21FPWuweDVZDuz@cluster0.zdtxlyg.mongodb.net/portfolio?retryWrites=true&w=majority&appName=Cluster0
       - key: NODE_VERSION
         value: 20.x
+      - key: JWT_SECRET
+        value: super_secret_portfolio_key_2026
+      - key: ADMIN_PASSCODE
+        value: DaxOtp@123
+      - key: EMAIL_USER
+        value: daxpatel230005@gmail.com
+      - key: EMAIL_PASS
+        value: "graa qctn xkps rncb"
       - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
         value: true
-      - key: EMAIL_USER
-        value: "ADD_YOUR_EMAIL_HERE"
-      - key: EMAIL_PASS
-        value: "ADD_YOUR_APP_PASSWORD_HERE"
-      - key: JWT_SECRET
-        value: "ADD_A_LONG_RANDOM_SECRET_HERE"
