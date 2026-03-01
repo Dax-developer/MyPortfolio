@@ -22,29 +22,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Multi-path Static File Resolution - Robust for Render/Vercel/Local
-const getStaticPath = () => {
-  const possiblePaths = [
-    path.join(__dirname, 'public'),         // Direct sibling (Standard backend/public)
-    path.join(process.cwd(), 'public'),     // Current working directory public
-    path.join(process.cwd(), 'backend/public') // Nested backend public
-  ];
+// Static File Serving
+const frontendPath = path.resolve(__dirname, 'public');
+console.log(`[STARTUP] Resolved Static Path: ${frontendPath}`);
 
-  console.log(`[STARTUP] Searching for static files...`);
-  for (const p of possiblePaths) {
-    const exists = require('fs').existsSync(p);
-    console.log(`[STARTUP] Checking path: ${p} - ${exists ? 'EXISTS' : 'NOT FOUND'}`);
-    if (exists && require('fs').existsSync(path.join(p, 'index.html'))) {
-      console.log(`[STARTUP] Validated static path with index.html: ${p}`);
-      return p;
-    }
-  }
-
-  console.warn(`[STARTUP] WARNING: No valid static path found with index.html. Falling back to ${possiblePaths[0]}`);
-  return possiblePaths[0];
-};
-
-const frontendPath = getStaticPath();
 app.use(express.static(frontendPath));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

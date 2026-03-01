@@ -1,9 +1,8 @@
 services:
   - type: web
-    name: myportfolio-backend
-    env: node
-    buildCommand: npm run build
-    startCommand: npm start
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
     envVars:
       - key: MONGO_URI
         value: mongodb+srv://daxpatel2300005_db_user:vi21FPWuweDVZDuz@cluster0.zdtxlyg.mongodb.net/?appName=Cluster0
