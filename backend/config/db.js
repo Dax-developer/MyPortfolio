@@ -1,23 +1,30 @@
 const mongoose = require('mongoose');
 
+// Suppress Mongoose 7 deprecation warning
+mongoose.set('strictQuery', false);
+
 const connectDB = async () => {
   let uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/portfolio';
 
-  // Safety check to prevent "Invalid scheme" error if MONGO_URI is empty string
   if (!uri || uri.trim() === '') {
     uri = 'mongodb://127.0.0.1:27017/portfolio';
   }
 
-  console.log('--- DEBUG: MongoDB Connection ---');
-  console.log('Raw process.env.MONGO_URI:', process.env.MONGO_URI ? 'EXISTS' : 'NOT FOUND');
-  console.log('Final URI being used:', uri);
-  console.log('---------------------------------');
+  console.log('--- [DATABASE] Connection Attempt ---');
+  console.log('URI Source:', process.env.MONGO_URI ? 'Environment Variable' : 'Local Fallback');
+  console.log('Target URI:', uri.replace(/:([^@]+)@/, ':****@')); // Hide password in logs
+  console.log('-----------------------------------');
 
   try {
-    await mongoose.connect(uri.trim(), { useNewUrlParser: true, useUnifiedTopology: true });
-    console.log('MongoDB connected');
+    await mongoose.connect(uri.trim(), {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 15000 // 15s timeout
+    });
+    console.log('✔ [DATABASE] MongoDB connected successfully');
   } catch (err) {
-    console.error('MongoDB connection error:', err.message);
+    console.error('✘ [DATABASE] MongoDB connection error:', err.message);
+    if (err.reason) console.error('Reason:', err.reason);
     process.exit(1);
   }
 };
