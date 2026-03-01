@@ -1,4 +1,10 @@
 {
+    "version": 2,
+    "functions": {
+        "backend/server.js": {
+            "runtime": "@vercel/node"
+        }
+    },
     "rewrites": [
         {
             "source": "/api/(.*)",
@@ -9,8 +15,12 @@
             "destination": "/backend/uploads/$1"
         },
         {
-            "source": "/((?!api|uploads).*)",
+            "source": "/((?!api|uploads|assets|canvaskit|icons|.*\\.).*)",
             "destination": "/backend/public/index.html"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/backend/public/$1"
         }
     ]
 }

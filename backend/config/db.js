@@ -22,4 +22,14 @@ const connectDB = async () => {
   }
 };
 
-module.exports = connectDB;
+let isConnected = false;
+const connectOnce = async () => {
+  if (isConnected) {
+    console.log('Using existing MongoDB connection');
+    return;
+  }
+  await connectDB();
+  isConnected = true;
+};
+
+module.exports = { connectDB, connectOnce };

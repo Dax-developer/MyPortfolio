@@ -2,7 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const connectDB = require('./config/db');
+const path = require('path');
+const { connectOnce } = require('./config/db');
 
 const projectRoutes = require('./routes/projectRoutes');
 const skillRoutes = require('./routes/skillRoutes');
@@ -54,26 +55,40 @@ app.get('*', (req, res, next) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
-const PORT = process.env.PORT || 5000;
-
-const start = async () => {
+// Database Connection Middleware for Serverless
+const dbMiddleware = async (req, res, next) => {
   try {
-    await connectDB();
-    const server = app.listen(PORT, () => {
-      console.log(`\x1b[32m%s\x1b[0m`, `✔ Server running on port ${PORT}`);
-    });
-
-    server.on('error', (e) => {
-      if (e.code === 'EADDRINUSE') {
-        console.error(`\x1b[31m%s\x1b[0m`, `❌ Error: Port ${PORT} is already in use.`);
-        console.log(`Try running: \x1b[36m%s\x1b[0m`, `npm run clean-start`);
-        process.exit(1);
-      }
-    });
+    await connectOnce();
+    next();
   } catch (err) {
-    console.error('Failed to start server:', err);
-    process.exit(1);
+    res.status(500).json({ error: 'Database connection failed' });
   }
 };
 
-start();
+app.use('/api', dbMiddleware);
+
+const PORT = process.env.PORT || 5000;
+
+if (process.env.VERCEL) {
+  module.exports = app;
+} else {
+  const start = async () => {
+    try {
+      await connectOnce();
+      const server = app.listen(PORT, () => {
+        console.log(`\x1b[32m%s\x1b[0m`, `✔ Server running on port ${PORT}`);
+      });
+
+      server.on('error', (e) => {
+        if (e.code === 'EADDRINUSE') {
+          console.error(`\x1b[31m%s\x1b[0m`, `❌ Error: Port ${PORT} is already in use.`);
+          process.exit(1);
+        }
+      });
+    } catch (err) {
+      console.error('Failed to start server:', err);
+      process.exit(1);
+    }
+  };
+  start();
+}
