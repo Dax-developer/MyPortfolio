@@ -88,16 +88,21 @@ class ApiService {
     }
   }
 
-  static Future<bool> signup(String email, String password) async {
+  static Future<Map<String, dynamic>> signup(String email, String password) async {
     try {
       final res = await http.post(
         Uri.parse('$baseUrl/auth/signup'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'email': email, 'password': password}),
       );
-      return res.statusCode == 200;
+      final data = json.decode(res.body);
+      if (res.statusCode == 200) {
+        return {'success': true, 'message': data['message'] ?? 'OTP sent to email'};
+      } else {
+        return {'success': false, 'message': data['error'] ?? 'Signup failed'};
+      }
     } catch (e) {
-      return false;
+      return {'success': false, 'message': 'Connection error. Check your internet.'};
     }
   }
 

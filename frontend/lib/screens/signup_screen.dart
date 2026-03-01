@@ -26,21 +26,21 @@ class _SignupScreenState extends State<SignupScreen> {
 
     setState(() => _isLoading = true);
 
-    final success = await ApiService.signup(
+    final result = await ApiService.signup(
       _emailController.text.trim(),
       _passwordController.text.trim(),
     );
 
     if (mounted) {
       setState(() => _isLoading = false);
-      if (success) {
+      if (result['success']) {
         setState(() => _isOtpSent = true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('OTP sent to your email!')),
+          SnackBar(content: Text(result['message'])),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Signup failed. Email might exist.')),
+          SnackBar(content: Text(result['message'])),
         );
       }
     }
