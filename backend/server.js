@@ -48,9 +48,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check (at root and /api)
-app.get('/health', (req, res) => res.json({ status: 'ok', source: 'root' }));
-app.get('/api/health', (req, res) => res.json({ status: 'ok', source: 'api' }));
 
 // Database Connection Middleware for Serverless/Production
 const dbMiddleware = async (req, res, next) => {
