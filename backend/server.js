@@ -22,11 +22,36 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Log Startup Info
+const frontendPath = path.join(__dirname, 'public');
+console.log(`[STARTUP] Root: ${process.cwd()}`);
+console.log(`[STARTUP] __dirname: ${__dirname}`);
+console.log(`[STARTUP] Expecting public at: ${frontendPath}`);
+
+// Serve static files FIRST
+app.use(express.static(frontendPath));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Debug: Log all requests
 app.use((req, res, next) => {
   console.log(`[DEBUG] ${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
   next();
 });
+
+// Health check
+app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date() }));
+
+// Database Connection Middleware for Serverless/Production
+const dbMiddleware = async (req, res, next) => {
+  try {
+    await connectOnce();
+    next();
+  } catch (err) {
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+};
+
+app.use('/api', dbMiddleware);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
@@ -40,31 +65,22 @@ app.use('/api/certificates', certificateRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/languages', languageRoutes);
 app.use('/api/portfolio', analyticsRoutes);
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Serve Frontend Static Files
-const frontendPath = path.join(__dirname, 'public');
-app.use(express.static(frontendPath));
 
 // Handle SPA Routing - Redirect all non-API requests to index.html
 app.get('*', (req, res, next) => {
   if (req.url.startsWith('/api') || req.url.startsWith('/uploads')) {
     return next();
   }
-  res.sendFile(path.join(frontendPath, 'index.html'));
+  const indexPath = path.join(frontendPath, 'index.html');
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error(`[ERROR] Failed to send index.html: ${err.message}`);
+      res.status(404).send('Site content not found. If this is a new deployment, wait a minute and refresh.');
+    }
+  });
 });
 
-// Database Connection Middleware for Serverless
-const dbMiddleware = async (req, res, next) => {
-  try {
-    await connectOnce();
-    next();
-  } catch (err) {
-    res.status(500).json({ error: 'Database connection failed' });
-  }
-};
 
-app.use('/api', dbMiddleware);
 
 const PORT = process.env.PORT || 5000;
 
