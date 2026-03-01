@@ -11,13 +11,27 @@ import '../models/language.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:url_launcher/url_launcher.dart'; 
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ApiService {
   // Base URL for API
-  // For emulator: http://10.0.2.2:5000/api
-  // For physical device: http://YOUR_LOCAL_IP:5000/api (e.g., http://192.168.1.100:5000/api)
-  // For Windows/Web local: http://localhost:5000/api
-  static const baseUrl = 'http://127.0.0.1:5000/api'; 
+  // PROD: Replace with your actual Vercel project URL
+  // Example: 'https://myportfolio-backend.vercel.app/api'
+  static const prodUrl = 'https://YOUR_VERCEL_URL.vercel.app/api';
+  static const localUrl = 'http://127.0.0.1:5000/api'; 
+
+  static String get baseUrl {
+    if (kIsWeb) {
+      // On web, if we're not local, use the current domain's /api
+      final currentUri = Uri.base;
+      if (currentUri.host == 'localhost' || currentUri.host == '127.0.0.1') {
+        return localUrl;
+      }
+      return '${currentUri.origin}/api';
+    }
+    // On mobile, use production URL (or local if debugging on emulator)
+    return prodUrl;
+  }
 
   static String? _sessionToken;
 
