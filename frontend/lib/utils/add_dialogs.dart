@@ -236,6 +236,14 @@ class AddDialogs {
                   showAddCertificateDialog(navigatorKey.currentContext!, onRefresh);
                 },
               ),
+              ListTile(
+                leading: const Icon(Icons.photo_camera, color: Colors.blueAccent),
+                title: const Text('Change Profile Photo', style: TextStyle(color: Colors.blueAccent)),
+                onTap: () {
+                  Navigator.pop(context);
+                  showChangePhotoDialog(navigatorKey.currentContext!, onRefresh);
+                },
+              ),
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.announcement, color: Colors.purple),
@@ -365,6 +373,14 @@ class AddDialogs {
               onTap: () {
                 Navigator.pop(context);
                 showEditFooterDialog(navigatorKey.currentContext!, onRefresh);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera, color: Colors.orange),
+              title: const Text('Change Profile Photo', style: TextStyle(color: Colors.orange)),
+              onTap: () {
+                Navigator.pop(context);
+                showChangePhotoDialog(navigatorKey.currentContext!, onRefresh);
               },
             ),
           ],
