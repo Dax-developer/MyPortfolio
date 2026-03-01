@@ -43,21 +43,19 @@ exports.signup = async (req, res) => {
             text: `Your OTP for portfolio signup is: ${otp}. It expires in 10 minutes.`
         };
 
-        if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+        if (process.env.EMAIL_USER && process.env.EMAIL_USER !== "ADD_YOUR_EMAIL_HERE" && process.env.EMAIL_PASS) {
             try {
                 await transporter.sendMail(mailOptions);
                 console.log(`✔ [AUTH] OTP sent successfully to ${email}`);
+                return res.json({ message: 'OTP sent to email' });
             } catch (mailErr) {
                 console.error(`✘ [AUTH] Failed to send email to ${email}:`, mailErr.message);
-                // In development/testing, we might want to still return success but log the OTP
-                console.log(`[AUTH] FALLBACK: OTP for ${email} is ${otp}`);
+                return res.status(500).json({ error: 'Failed to send OTP email. Please check server logs.' });
             }
         } else {
-            console.warn('⚠ [AUTH] EMAIL CONFIG MISSING (EMAIL_USER/EMAIL_PASS not set)');
-            console.log(`[AUTH] DEBUG: OTP for ${email} is ${otp}`);
+            console.warn('⚠ [AUTH] EMAIL CONFIG MISSING (Check Render Env Variables)');
+            return res.status(500).json({ error: 'Email configuration missing on server. Cannot send OTP.' });
         }
-
-        res.json({ message: 'OTP sent to email (Check logs if not received)' });
     } catch (err) {
         console.error(`✘ [AUTH] Signup Error:`, err.message);
         res.status(500).json({ error: err.message });
