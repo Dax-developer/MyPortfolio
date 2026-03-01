@@ -8,7 +8,8 @@ const destDir = path.join(__dirname, 'public');
 async function prepare() {
     try {
         console.log('Building Flutter Web...');
-        execSync('cd ../frontend && flutter build web', { stdio: 'inherit' });
+        const frontendDir = path.join(__dirname, '../frontend');
+        execSync(`cd "${frontendDir}" && flutter build web`, { stdio: 'inherit' });
 
         console.log('Cleaning up public folder...');
         await fs.remove(destDir);
